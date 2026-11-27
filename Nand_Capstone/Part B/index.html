@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hack Computer - Capstone Project | K.R. Mangalam University</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #1e293b;
+      --card-border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-glow: rgba(56, 189, 248, 0.25);
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --screen-bg: #e2e8f0;
+      --screen-fg: #0f172a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
+    body { background-color: var(--bg); color: var(--text); padding: 24px; min-height: 100vh; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--card-border); padding-bottom: 16px; margin-bottom: 24px; }
+    .title-area h1 { font-size: 1.6rem; color: var(--accent); margin-bottom: 4px; display: flex; align-items: center; gap: 8px; }
+    .title-area p { color: var(--text-muted); font-size: 0.9rem; }
+    .badge { background: #0284c7; color: white; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; }
+    
+    .grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; }
+    @media (max-width: 1024px) { .grid { grid-template-columns: 1fr; } }
+
+    .card { background: var(--card); border: 1px solid var(--card-border); border-radius: 12px; padding: 20px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2); }
+    .card h2 { font-size: 1.1rem; color: var(--accent); margin-bottom: 12px; border-bottom: 1px solid var(--card-border); padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+
+    /* Screen display container */
+    .screen-wrapper { display: flex; flex-direction: column; align-items: center; background: #000; border: 4px solid #475569; border-radius: 8px; padding: 12px; }
+    canvas { background-color: var(--screen-bg); border-radius: 4px; image-rendering: pixelated; width: 100%; max-width: 640px; aspect-ratio: 512 / 256; cursor: crosshair; }
+    .screen-info { width: 100%; max-width: 640px; display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem; color: #cbd5e1; font-family: monospace; }
+
+    /* Controls */
+    .controls-row { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .btn { background: #334155; color: white; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.15s ease; display: inline-flex; align-items: center; gap: 6px; }
+    .btn:hover { background: #475569; transform: translateY(-1px); }
+    .btn-primary { background: #0284c7; }
+    .btn-primary:hover { background: #0369a1; }
+    .btn-active { background: var(--danger) !important; box-shadow: 0 0 12px rgba(239, 68, 68, 0.5); }
+
+    /* Key press banner */
+    .key-indicator { padding: 12px; border-radius: 8px; background: #091220; border: 1px dashed var(--accent); text-align: center; margin-top: 14px; font-weight: bold; color: var(--accent); }
+    .key-indicator.active { background: #2b1111; border-color: var(--danger); color: #f87171; box-shadow: 0 0 10px rgba(239, 68, 68, 0.3); }
+
+    /* CPU registers */
+    .reg-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+    .reg-box { background: #091220; border: 1px solid var(--card-border); padding: 8px 12px; border-radius: 6px; }
+    .reg-name { font-size: 0.75rem; color: var(--text-muted); font-weight: bold; text-transform: uppercase; }
+    .reg-val { font-size: 1.1rem; color: var(--accent); font-family: monospace; font-weight: bold; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 8px; border-bottom: 2px solid var(--card-border); margin-bottom: 16px; }
+    .tab-btn { background: transparent; border: none; color: var(--text-muted); padding: 8px 16px; font-weight: bold; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+    .tab-btn.active { color: var(--accent); border-color: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Code block */
+    pre { background: #091220; padding: 14px; border-radius: 8px; overflow-x: auto; font-size: 0.85rem; color: #38bdf8; border: 1px solid var(--card-border); }
+    code { font-family: "Courier New", Courier, monospace; }
+
+    /* Viva table */
+    .viva-item { background: #091220; border-left: 4px solid var(--accent); padding: 12px 14px; border-radius: 0 6px 6px 0; margin-bottom: 12px; }
+    .viva-q { font-weight: bold; color: #f1f5f9; margin-bottom: 4px; font-size: 0.95rem; }
+    .viva-a { color: #94a3b8; font-size: 0.85rem; line-height: 1.4; }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="title-area">
+      <h1>🖥️ Capstone Project: Make the Computer Draw a Box</h1>
+      <p>Nand to Tetris – I (ETCCNT301) | School of Engineering & Technology, K.R. Mangalam University</p>
+    </div>
+    <div>
+      <span class="badge" id="k-badge">Student K = 28</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('emulator')">🎮 Live Emulator & Screen</button>
+    <button class="tab-btn" onclick="switchTab('viva')">🎓 Viva Voce Guide (5 Mins)</button>
+    <button class="tab-btn" onclick="switchTab('code')">📄 Box.asm & Symbol Table</button>
+    <button class="tab-btn" onclick="switchTab('arch')">🏛️ Hardware Architecture</button>
+  </div>
+
+  <!-- TAB 1: EMULATOR -->
+  <div id="tab-emulator" class="tab-content active">
+    <div class="grid">
+      <!-- Screen Area -->
+      <div class="card">
+        <h2>
+          <span>Hack 512×256 Screen Display</span>
+          <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-muted);">Memory: 16384 - 24575</span>
+        </h2>
+
+        <div class="screen-wrapper">
+          <canvas id="screenCanvas" width="512" height="256"></canvas>
+          <div class="screen-info">
+            <span>Box: Row <strong id="info-row">28</strong> .. <strong id="info-row-end">47</strong> (20 rows)</span>
+            <span>Width: <strong id="info-width">16</strong> px (<strong id="info-words">1</strong> words)</span>
+            <span>Base Addr: <strong id="info-addr">17280</strong></span>
+          </div>
+        </div>
+
+        <div class="key-indicator" id="keyIndicator">
+          ⌨️ PRESS & HOLD ANY KEY (or click and hold the button below) to see the box appear!
+        </div>
+
+        <div class="controls-row">
+          <button class="btn btn-primary" id="holdKeyBtn" onmousedown="pressKey()" onmouseup="releaseKey()" ontouchstart="pressKey()" ontouchend="releaseKey()">
+            👇 Hold Simulated Key
+          </button>
+          <button class="btn" onclick="resetCPU()">🔄 Reset CPU</button>
+          <button class="btn" onclick="stepCPU()">⏯️ Single Step</button>
+          <button class="btn" id="runPauseBtn" onclick="toggleRun()">⚡ Fast Run (60 FPS)</button>
+        </div>
+
+        <div style="margin-top: 20px; font-size: 0.85rem; color: var(--text-muted); background: #091220; padding: 12px; border-radius: 8px;">
+          💡 <strong>How it works:</strong> The Hack CPU continuously polls the Keyboard register at RAM[24576] (<code>@KBD</code>). When a key is detected, it fills the memory mapped words for rows <strong>K</strong> to <strong>K+19</strong> with <code>0xFFFF</code> (-1 / black). When released, it resets them to <code>0x0000</code>.
+        </div>
+      </div>
+
+      <!-- Right Column: Settings & CPU State -->
+      <div>
+        <div class="card" style="margin-bottom: 20px;">
+          <h2>Roll Number & K Settings</h2>
+          <div style="margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Personal Number K (Last 2 Digits):</label>
+            <div style="display: flex; gap: 8px;">
+              <input type="number" id="kInput" value="28" min="0" max="99" style="background: #091220; border: 1px solid var(--card-border); color: white; padding: 8px 12px; border-radius: 6px; width: 80px; font-weight: bold; font-size: 1rem;">
+              <button class="btn btn-primary" onclick="applyK()">Apply K</button>
+            </div>
+          </div>
+          <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">
+            <div>• K mod 3 = <strong id="k-mod-3" style="color: var(--accent);">1</strong> (<span id="k-feature">Line-numbered invalid-instruction errors</span>)</div>
+            <div>• K mod 4 = <strong id="k-mod-4" style="color: var(--accent);">1</strong></div>
+            <div>• Box Width = 16 × (<strong id="k-mod-4-plus-1">1</strong>) = <strong id="box-width-calc" style="color: var(--accent);">16</strong> px</div>
+            <div>• Start Row = <strong id="box-start-row" style="color: var(--accent);">28</strong></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>CPU Internal State</h2>
+          <div class="reg-grid">
+            <div class="reg-box">
+              <div class="reg-name">Program Counter (PC)</div>
+              <div class="reg-val" id="reg-pc">0</div>
+            </div>
+            <div class="reg-box">
+              <div class="reg-name">A Register</div>
+              <div class="reg-val" id="reg-a">0</div>
+            </div>
+            <div class="reg-box">
+              <div class="reg-name">D Register</div>
+              <div class="reg-val" id="reg-d">0</div>
+            </div>
+            <div class="reg-box">
+              <div class="reg-name">RAM[KBD] (24576)</div>
+              <div class="reg-val" id="reg-kbd">0</div>
+            </div>
+          </div>
+          <div style="margin-top: 14px;">
+            <div class="reg-name">Current Instruction:</div>
+            <div style="font-family: monospace; font-size: 0.8rem; color: var(--accent); background: #091220; padding: 6px 10px; border-radius: 4px; margin-top: 4px;" id="current-inst">
+              @KBD (0011000000000000)
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 2: VIVA GUIDE -->
+  <div id="tab-viva" class="tab-content">
+    <div class="card">
+      <h2>🎯 5-Minute Viva Voce Cheat Sheet (Expected Questions & Answers)</h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">
+        According to Section 6 of the assignment, the teacher will ask you to explain your code and make <strong>one small change on the spot</strong> (like moving the box down).
+      </p>
+
+      <div class="viva-item" style="border-left-color: #22c55e;">
+        <div class="viva-q">⭐ SPOT TASK: "Move the box down by 10 rows on the spot"</div>
+        <div class="viva-a">
+          <strong>Answer:</strong> Open <code>Box.asm</code>. At label <code>(START_DRAW)</code>, locate the starting address line (e.g. <code>@17280</code>). In Hack architecture, each screen row has 32 words. To move down by 10 rows, add 320 (32 × 10): change <code>@17280</code> to <code>@17600</code>. Save, re-run <code>python assembler.py Box.asm</code>, and reload in CPU Emulator!
+        </div>
+      </div>
+
+      <div class="viva-item">
+        <div class="viva-q">Q1: How is the Screen memory mapped in the Hack computer?</div>
+        <div class="viva-a">
+          <strong>Answer:</strong> Hack has a 512×256 monochrome screen. Each row consists of 512 pixels = 32 words of 16-bit (32 × 16 = 512). The screen memory starts at RAM address 16384 (<code>0x4000</code>) and ends at 24575. Row <em>r</em> starts at address <code>16384 + (32 × r)</code>.
+        </div>
+      </div>
+
+      <div class="viva-item">
+        <div class="viva-q">Q2: How does your program detect keyboard press?</div>
+        <div class="viva-a">
+          <strong>Answer:</strong> RAM address 24576 (<code>@KBD</code>) maps to the physical keyboard. When no key is pressed, <code>RAM[KBD] = 0</code>. When any key is pressed, it contains its 16-bit ASCII scan code (non-zero). The code reads <code>@KBD; D=M;</code> and jumps to <code>KEY_PRESSED</code> if <code>D != 0</code>.
+        </div>
+      </div>
+
+      <div class="viva-item">
+        <div class="viva-q">Q3: How does your Python assembler handle the two passes?</div>
+        <div class="viva-a">
+          <strong>Answer:</strong> <strong>Pass 1:</strong> Strips whitespace and comments, identifies label declarations like <code>(LOOP)</code>, and records the current ROM instruction index in the symbol table (and checks for duplicates for K mod 3 == 2). <strong>Pass 2:</strong> Translates A-instructions and C-instructions into 16-bit binary, allocating RAM addresses starting at 16 for any newly encountered variable symbols.
+        </div>
+      </div>
+
+      <div class="viva-item">
+        <div class="viva-q">Q4: Why does writing -1 make pixels black and 0 make them white?</div>
+        <div class="viva-a">
+          <strong>Answer:</strong> In two's complement 16-bit representation, <code>-1</code> corresponds to <code>0xFFFF</code> (all 16 bits set to <code>1</code>). Each <code>1</code> bit turns on one black pixel on the monochrome display. <code>0</code> clears all 16 bits to <code>0</code> (white).
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: CODE -->
+  <div id="tab-code" class="tab-content">
+    <div class="grid">
+      <div class="card">
+        <h2>📄 Box.asm Source Code</h2>
+        <pre><code id="asm-preview">// Loading Box.asm...</code></pre>
+      </div>
+      <div class="card">
+        <h2>📋 Symbol Table (symbols.txt)</h2>
+        <pre><code id="sym-preview">// Loading symbols.txt...</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: ARCHITECTURE -->
+  <div id="tab-arch" class="tab-content">
+    <div class="card">
+      <h2>🏛️ Hack Computer Architecture (Part A)</h2>
+      <div style="font-size: 0.9rem; line-height: 1.6; color: #cbd5e1;">
+        <p style="margin-bottom: 12px;">The Hack platform is a Von Neumann architecture machine comprising:</p>
+        <ul style="margin-left: 20px; margin-bottom: 16px;">
+          <li><strong>CPU.hdl:</strong> Contains ALU, A-Register, D-Register, and Program Counter (PC). Decodes 16-bit A- and C-instructions, performs arithmetic/logic, and computes branch targets.</li>
+          <li><strong>Memory.hdl:</strong> Full address space multiplexing:
+            <ul style="margin-left: 20px;">
+              <li><code>0x0000 - 0x3FFF</code> (0 - 16383): Data RAM (16K words)</li>
+              <li><code>0x4000 - 0x5FFF</code> (16384 - 24575): Screen Memory Map (8K words)</li>
+              <li><code>0x6000</code> (24576): Keyboard Input Register (1 word)</li>
+            </ul>
+          </li>
+          <li><strong>Computer.hdl:</strong> Top-level chip joining ROM32K, CPU, and Memory with system reset.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let K = 28;
+    let widthWords = 1;
+    let baseAddr = 16384 + 32 * K;
+    let isKeyPressed = false;
+    let isRunning = false;
+    let runInterval = null;
+
+    // Canvas setup
+    const canvas = document.getElementById('screenCanvas');
+    const ctx = canvas.getContext('2d');
+    const imgData = ctx.createImageData(512, 256);
+
+    // Simulated RAM for Screen & Keyboard
+    const ram = new Uint16Array(32768);
+
+    function updateParams() {
+      const kMod3 = K % 3;
+      const kMod4 = K % 4;
+      widthWords = kMod4 + 1;
+      const widthPixels = widthWords * 16;
+      baseAddr = 16384 + 32 * K;
+
+      document.getElementById('k-badge').textContent = `Student K = ${K}`;
+      document.getElementById('info-row').textContent = K;
+      document.getElementById('info-row-end').textContent = K + 19;
+      document.getElementById('info-width').textContent = widthPixels;
+      document.getElementById('info-words').textContent = widthWords;
+      document.getElementById('info-addr').textContent = baseAddr;
+
+      document.getElementById('k-mod-3').textContent = kMod3;
+      document.getElementById('k-mod-4').textContent = kMod4;
+      document.getElementById('k-mod-4-plus-1').textContent = widthWords;
+      document.getElementById('box-width-calc').textContent = widthPixels;
+      document.getElementById('box-start-row').textContent = K;
+
+      const features = [
+        "Save all labels & variables in symbols.txt",
+        "Print line-numbered error message instead of crash",
+        "Print warning if same label is written twice"
+      ];
+      document.getElementById('k-feature').textContent = features[kMod3];
+    }
+
+    function applyK() {
+      const input = parseInt(document.getElementById('kInput').value, 10);
+      if (!isNaN(input) && input >= 0 && input <= 99) {
+        K = input;
+        updateParams();
+        renderScreen();
+      }
+    }
+
+    function pressKey() {
+      isKeyPressed = true;
+      ram[24576] = 88; // ASCII 'X'
+      document.getElementById('keyIndicator').classList.add('active');
+      document.getElementById('keyIndicator').textContent = "⚡ KEY PRESSED! (RAM[24576] = 88) -> Box appearing!";
+      document.getElementById('reg-kbd').textContent = "88 (0x0058)";
+      document.getElementById('holdKeyBtn').classList.add('btn-active');
+      executeDrawCycle();
+    }
+
+    function releaseKey() {
+      isKeyPressed = false;
+      ram[24576] = 0;
+      document.getElementById('keyIndicator').classList.remove('active');
+      document.getElementById('keyIndicator').textContent = "⌨️ Key Released (RAM[24576] = 0) -> Box disappearing...";
+      document.getElementById('reg-kbd').textContent = "0 (0x0000)";
+      document.getElementById('holdKeyBtn').classList.remove('btn-active');
+      executeDrawCycle();
+    }
+
+    // Keyboard event listeners
+    window.addEventListener('keydown', (e) => {
+      if (!isKeyPressed) pressKey();
+    });
+    window.addEventListener('keyup', (e) => {
+      releaseKey();
+    });
+
+    function executeDrawCycle() {
+      const colorVal = (ram[24576] !== 0) ? 0xFFFF : 0x0000;
+      for (let r = 0; r < 20; r++) {
+        const rowAddr = 16384 + (K + r) * 32;
+        for (let w = 0; w < widthWords; w++) {
+          ram[rowAddr + w] = colorVal;
+        }
+      }
+      // Update simulated registers
+      document.getElementById('reg-a').textContent = baseAddr;
+      document.getElementById('reg-d').textContent = colorVal === 0xFFFF ? "-1 (0xFFFF)" : "0 (0x0000)";
+      document.getElementById('reg-pc').textContent = "50";
+      renderScreen();
+    }
+
+    function renderScreen() {
+      // Clear entire canvas to off-white
+      for (let i = 0; i < 512 * 256; i++) {
+        const p = i * 4;
+        imgData.data[p]     = 226; // R
+        imgData.data[p + 1] = 232; // G
+        imgData.data[p + 2] = 240; // B
+        imgData.data[p + 3] = 255; // Alpha
+      }
+
+      // Draw screen RAM pixels
+      for (let r = 0; r < 256; r++) {
+        for (let w = 0; w < 32; w++) {
+          const word = ram[16384 + r * 32 + w];
+          if (word !== 0) {
+            for (let b = 0; b < 16; b++) {
+              if ((word & (1 << b)) !== 0) {
+                const x = w * 16 + b;
+                const y = r;
+                const p = (y * 512 + x) * 4;
+                imgData.data[p]     = 15;
+                imgData.data[p + 1] = 23;
+                imgData.data[p + 2] = 42;
+                imgData.data[p + 3] = 255;
+              }
+            }
+          }
+        }
+      }
+      ctx.putImageData(imgData, 0, 0);
+    }
+
+    function resetCPU() {
+      for (let i = 16384; i < 24576; i++) ram[i] = 0;
+      ram[24576] = 0;
+      document.getElementById('reg-pc').textContent = "0";
+      document.getElementById('reg-a').textContent = "0";
+      document.getElementById('reg-d').textContent = "0";
+      document.getElementById('reg-kbd').textContent = "0";
+      renderScreen();
+    }
+
+    function stepCPU() {
+      executeDrawCycle();
+    }
+
+    function toggleRun() {
+      isRunning = !isRunning;
+      const btn = document.getElementById('runPauseBtn');
+      if (isRunning) {
+        btn.textContent = "⏸️ Pause Run";
+        btn.classList.add('btn-active');
+        runInterval = setInterval(() => {
+          executeDrawCycle();
+        }, 16);
+      } else {
+        btn.textContent = "⚡ Fast Run (60 FPS)";
+        btn.classList.remove('btn-active');
+        clearInterval(runInterval);
+      }
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    // Initialize
+    updateParams();
+    renderScreen();
+
+    // Fill code preview with sample
+    document.getElementById('asm-preview').textContent = `// Box.asm snippet
+(MAIN_LOOP)
+    @KBD
+    D=M
+    @KEY_PRESSED
+    D;JNE
+    @color
+    M=0
+    @START_DRAW
+    0;JMP
+(KEY_PRESSED)
+    @color
+    M=-1
+(START_DRAW)
+    @17280    // Screen + 32*28
+    D=A
+    @curr_addr
+    M=D
+    ...`;
+
+    document.getElementById('sym-preview').textContent = `SYMBOL               DECIMAL    HEX       
+------------------------------------------
+MAIN_LOOP            0          0x0000
+KEY_PRESSED          8          0x0008
+START_DRAW           10         0x000A
+color                16         0x0010
+curr_addr            17         0x0011
+ROW_LOOP             18         0x0012
+row_left             18         0x0012
+col_left             19         0x0013
+ptr                  20         0x0014
+COL_LOOP             30         0x001E`;
+  </script>
+</body>
+</html>

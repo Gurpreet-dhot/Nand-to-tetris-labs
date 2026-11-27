@@ -1,0 +1,14 @@
+# Hack Assembler Symbol Table (Labels & Variables)
+# Generated for Capstone Project (K=28)
+SYMBOL               DECIMAL    HEX       
+------------------------------------------
+MAIN_LOOP            0          0x0000
+KEY_PRESSED          8          0x0008
+START_DRAW           10         0x000A
+color                16         0x0010
+curr_addr            17         0x0011
+ROW_LOOP             18         0x0012
+row_left             18         0x0012
+col_left             19         0x0013
+ptr                  20         0x0014
+COL_LOOP             30         0x001E

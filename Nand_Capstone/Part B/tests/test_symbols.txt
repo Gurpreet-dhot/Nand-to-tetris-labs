@@ -1,0 +1,6 @@
+# Hack Assembler Symbol Table (Labels & Variables)
+# Generated for Capstone Project (K=42)
+SYMBOL               DECIMAL    HEX       
+------------------------------------------
+MY_LABEL             2          0x0002
+myVar                16         0x0010

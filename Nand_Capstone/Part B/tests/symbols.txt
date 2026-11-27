@@ -1,0 +1,8 @@
+# Hack Assembler Symbol Table (Labels & Variables)
+# Generated for Capstone Project (K=41)
+SYMBOL               DECIMAL    HEX       
+------------------------------------------
+LOOP                 10         0x000A
+counter              16         0x0010
+address              17         0x0011
+INFINITE_LOOP        23         0x0017
